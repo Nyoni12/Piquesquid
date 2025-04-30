@@ -1639,8 +1639,8 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4 {
         display: none;
         right: 45px;
         bottom: 45px;
-        z-index: 99;)
-
+        z-index: 99;
+      }
         .btn-primary, .btn-secondary {
           color: #FFFFFF;
           box-shadow: inset 0 0 0 50px transparent;
