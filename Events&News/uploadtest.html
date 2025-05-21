@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article Upload</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    select {
+      height: 40px;
+      background-color: white;
+    }
+    #image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      margin-top: 10px;
+      display: none;
+    }
+    #remove-image {
+      display: none;
+      margin-top: 10px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button[type="submit"] {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button[type="submit"]:hover {
+      background: #45a049;
+    }
+    #upload-status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background: #f2dede;
+      color: #a94442;
+    }
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .article-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+    .article-card:hover {
+      transform: translateY(-5px);
+    }
+    .article-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .article-content {
+      padding: 15px;
+    }
+    .category-tag {
+      display: inline-block;
+      background: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .date-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <div class="upload-form-container">
+      <h2>Upload New Article</h2>
+      <form id="article-upload-form">
+        <div class="form-group">
+          <label for="article-title">Title*</label>
+          <input type="text" id="article-title" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="article-author">Author*</label>
+          <input type="text" id="article-author" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="article-newspaper">Newspaper*</label>
+          <input type="text" id="article-newspaper" required>
+        </div>
+
+        <div class="form-group">
+          <label for="article-category">Category*</label>
+          <select id="article-category" required>
+            <option value="">Loading categories...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="article-image">Featured Image*</label>
+          <input type="file" id="article-image" accept="image/*" required>
+          <div id="image-preview-container">
+            <img id="image-preview">
+            <button type="button" id="remove-image">Remove Image</button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="article-excerpt">Excerpt*</label>
+          <textarea id="article-excerpt" rows="3" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="article-content">Content (HTML)*</label>
+          <textarea id="article-content" rows="6" required></textarea>
+        </div>
+        
+        <div class="form-group date-inputs">
+          <div>
+            <label for="article-publish-date">Publish Date*</label>
+            <input type="date" id="article-publish-date" required>
+          </div>
+          <div>
+            <label for="article-display-date">Display Date*</label>
+            <input type="text" id="article-display-date" placeholder="e.g. May 15, 2023" required>
+          </div>
+        </div>
+        
+        <button type="submit" id="submit-article">Publish Article</button>
+        <div id="upload-status"></div>
+      </form>
+    </div>
+    
+    <h2>Recent Articles</h2>
+    <div class="articles-grid" id="articles-grid">
+      <!-- Articles will be loaded here -->
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let supabaseClient;
+    let articleCategories = [];
+
+    // Initialize the application after Supabase is loaded
+    function initApp() {
+      console.log("Initializing application...");
+      
+      // Initialize Supabase client
+      const supabaseUrl = 'https://fsjazhyxzomlepduzwlv.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzamF6aHl4em9tbGVwZHV6d2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2MzE0MjEsImV4cCI6MjA2MjIwNzQyMX0.YAJwZ835TzPOjsNA91Z3NynWVKWUd31Lazj14BXE_PQ';
+      
+      if (typeof supabase === 'undefined') {
+        console.error("Supabase library not loaded");
+        showStatus("Error: Supabase library failed to load", "error");
+        return;
+      }
+      
+      supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+      console.log("Supabase client initialized");
+
+      // Set up event listeners
+      setupEventListeners();
+      
+      // Load initial data
+      loadCategories();
+      loadArticles();
+    }
+
+    // Set up event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM fully loaded");
+      if (typeof supabase !== 'undefined') {
+        initApp();
+      } else {
+        setTimeout(initApp, 500);
+      }
+    });
+
+    function setupEventListeners() {
+      // Image preview handler
+      document.getElementById('article-image').addEventListener('change', function(e) {
+        const preview = document.getElementById('image-preview');
+        const removeBtn = document.getElementById('remove-image');
+        
+        if (this.files.length > 0) {
+          preview.src = URL.createObjectURL(this.files[0]);
+          preview.style.display = 'block';
+          removeBtn.style.display = 'inline-block';
+        }
+      });
+
+      // Remove image handler
+      document.getElementById('remove-image').addEventListener('click', function() {
+        const input = document.getElementById('article-image');
+        const preview = document.getElementById('image-preview');
+        
+        input.value = '';
+        preview.src = '';
+        preview.style.display = 'none';
+        this.style.display = 'none';
+      });
+
+      // Form submission handler with manual date inputs
+      document.getElementById('article-upload-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const title = document.getElementById('article-title').value;
+        const author = document.getElementById('article-author').value;
+        const newspaper = document.getElementById('article-newspaper').value;
+        const categoryId = document.getElementById('article-category').value;
+        const excerpt = document.getElementById('article-excerpt').value;
+        const content = document.getElementById('article-content').value;
+        const imageFile = document.getElementById('article-image').files[0];
+        const publishDate = document.getElementById('article-publish-date').value;
+        const displayDate = document.getElementById('article-display-date').value;
+
+        // Validate
+        if (!categoryId || !publishDate || !displayDate) {
+          showStatus("Please fill all required fields including dates", "error");
+          return;
+        }
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submit-article');
+        submitBtn.disabled = true;
+        showStatus("Uploading article...", "info");
+
+        try {
+          // 1. Upload image
+          const fileName = `articles/${Date.now()}-${imageFile.name}`;
+          const { error: uploadError } = await supabaseClient.storage
+            .from('article-images')
+            .upload(fileName, imageFile);
+
+          if (uploadError) throw uploadError;
+
+          // 2. Get public URL
+          const { data: { publicUrl } } = supabaseClient.storage
+            .from('article-images')
+            .getPublicUrl(fileName);
+
+          // 3. Save article to database with manual dates
+          const { error: dbError } = await supabaseClient
+            .from('articles')
+            .insert([{
+              title,
+              author,
+              newspaper,
+              image_url: publicUrl,
+              excerpt,
+              content,
+              category_id: categoryId,
+              publish_date: publishDate,  // Manual input
+              display_date: displayDate,   // Manual input
+              // created_at will be automatically set by the database
+            }]);
+
+          if (dbError) throw dbError;
+
+          // Success
+          showStatus("Article published successfully!", "success");
+          this.reset();
+          document.getElementById('image-preview').style.display = 'none';
+          document.getElementById('remove-image').style.display = 'none';
+          
+          // Refresh articles list
+          await loadArticles();
+          
+        } catch (error) {
+          console.error("Upload failed:", error);
+          showStatus(`Error: ${error.message}`, "error");
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    }
+
+    // Load categories from Supabase
+    async function loadCategories() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('categories')
+          .select('id, name')
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+
+        articleCategories = data;
+        updateCategoryDropdown();
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        document.getElementById('article-category').innerHTML = 
+          '<option value="">Error loading categories</option>';
+      }
+    }
+
+    // Load articles with all fields from your schema
+    async function loadArticles() {
+      try {
+        const { data: articles, error } = await supabaseClient
+          .from('articles')
+          .select(`
+            id,
+            title,
+            author,
+            newspaper,
+            image_url,
+            excerpt,
+            content,
+            publish_date,
+            display_date,
+            created_at,
+            category:category_id (name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(12);
+
+        if (error) throw error;
+
+        renderArticles(articles);
+      } catch (error) {
+        console.error("Error loading articles:", error);
+        document.getElementById('articles-grid').innerHTML = 
+          '<p>Error loading articles. Please refresh the page.</p>';
+      }
+    }
+
+    // Render articles with all fields
+    function renderArticles(articles) {
+      const grid = document.getElementById('articles-grid');
+      grid.innerHTML = articles.map(article => `
+        <div class="article-card">
+          
+          <div class="article-content">
+            ${article.category ? `<span class="category-tag">${article.category.name}</span>` : ''}
+            <h3>${article.title}</h3>
+            <p><small>By ${article.author} | ${article.newspaper}</small></p>
+            <p><small>Publish Date: ${article.display_date}</small></p>
+            <p><small>Created: ${new Date(article.created_at).toLocaleString()}</small></p>
+            <p>${article.excerpt}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateCategoryDropdown() {
+      const select = document.getElementById('article-category');
+      select.innerHTML = '';
+      
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = articleCategories.length 
+        ? 'Select a category' 
+        : 'No categories available';
+      select.appendChild(defaultOption);
+      
+      articleCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        select.appendChild(option);
+      });
+    }
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('upload-status');
+      statusEl.textContent = message;
+      statusEl.className = type;
+    }
+  </script>
+</body>
+</html>
