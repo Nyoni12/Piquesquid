@@ -55,8 +55,9 @@
 				}
 				
 				&.cta-button {
-					display: inline-block;
+					margin: 15px;
 					a {
+						display: block;
 						padding: 6px 20px;
 						border: 1px solid rgba($white, .1);
 						color: $white;
