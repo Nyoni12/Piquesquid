@@ -1,0 +1,119 @@
+.translate-container {
+    position: fixed;
+    z-index: 9999;
+  }
+
+  .translate-ribbon {
+    position: fixed;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    background-color: rgba(255, 255, 255, 0.95);
+    cursor: grab;
+    user-select: none;
+    right: 20px;
+    /* Default position will be set by JavaScript */
+  }
+
+  .translate-ribbon:active {
+    cursor: grabbing;
+  }
+
+  .translate-label {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .translate-label svg {
+    color: #EF4623;
+  }
+
+  .drag-handle {
+    margin-left: 8px;
+    color: #aaa;
+    cursor: grab;
+    user-select: none;
+    font-size: 16px;
+    padding: 0 5px;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .goog-te-gadget {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+    margin: 0 !important;
+  }
+
+  .goog-te-combo {
+    padding: 8px 12px;
+    padding-right: 30px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    min-width: 180px;
+  }
+
+  .goog-te-menu-frame {
+    max-width: 100% !important;
+    width: auto !important;
+  }
+
+  .goog-te-menu2 {
+    max-width: 500px !important;
+    width: auto !important;
+    overflow-y: auto !important;
+    max-height: 70vh !important;
+  }
+
+  .goog-te-menu2-item {
+    padding: 8px 15px !important;
+    white-space: nowrap !important;
+  }
+
+  .goog-te-banner-frame {
+    display: none !important;
+  }
+
+  /*body {
+    top: 0 !important;
+  }*/
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .translate-ribbon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      left: auto;
+      top: auto;
+      transform: none;
+    }
+    
+    .goog-te-combo {
+      width: 160px;
+    }
+  }
